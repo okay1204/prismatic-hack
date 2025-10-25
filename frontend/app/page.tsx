@@ -6,13 +6,15 @@ import { ArrowRight, Loader, CheckCircle, XCircle } from "lucide-react";
 import { useActionState, useState } from "react";
 import { uploadToLambda } from "./actions";
 
-type UploadState = {
-  success?: boolean;
-  error?: string;
-  message?: string;
-  fileName?: string;
-  fileSize?: number;
-} | undefined;
+type UploadState =
+  | {
+      success?: boolean;
+      error?: string;
+      message?: string;
+      fileName?: string;
+      fileSize?: number;
+    }
+  | undefined;
 
 export default function Home() {
   const [fileInput, setFileInput] = useState<File | null>(null);
@@ -27,9 +29,7 @@ export default function Home() {
     <div className="flex items-center justify-center flex-col min-h-screen px-4 bg-zinc-100 space-y-10">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold">Cancer Analysis</h1>
-        <p className="text-muted-foreground">
-          Upload an image for analysis
-        </p>
+        <p className="text-muted-foreground">Upload an image for analysis</p>
       </div>
 
       <Card className="max-w-xl w-full">
@@ -40,8 +40,16 @@ export default function Home() {
               file={fileInput}
               setFile={setFileInput}
             />
-            <Button type="submit" className="w-full" disabled={pending || !fileInput}>
-              {pending ? <Loader className="animate-spin mr-2" /> : <ArrowRight className="mr-2" />}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={pending || !fileInput}
+            >
+              {pending ? (
+                <Loader className="animate-spin mr-2" />
+              ) : (
+                <ArrowRight className="mr-2" />
+              )}
               {pending ? "Uploading..." : "Upload & Analyze"}
             </Button>
           </form>
@@ -69,7 +77,8 @@ export default function Home() {
                   </p>
                   {state.fileName && (
                     <p className="text-sm mt-2">
-                      <strong>File:</strong> {state.fileName} ({(state.fileSize! / 1024).toFixed(2)} KB)
+                      <strong>File:</strong> {state.fileName} (
+                      {(state.fileSize! / 1024).toFixed(2)} KB)
                     </p>
                   )}
                 </div>
