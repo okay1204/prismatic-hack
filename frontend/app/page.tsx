@@ -2,17 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileInput } from "@/components/ui/file-input";
-import {
-  ArrowRight,
-  Loader,
-  CheckCircle,
-  XCircle,
-  RefreshCcw,
-} from "lucide-react";
+import { ArrowRight, Loader, XCircle } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { uploadToLambda } from "./actions";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 type UploadState =
   | {
@@ -31,10 +24,7 @@ export default function Home() {
   const [state, action, pending] = useActionState<UploadState, FormData>(
     async (prev: UploadState, formData: FormData) => {
       if (!formData.get("file-input")) return undefined;
-      return await {
-        // uploadToLambda(formData)
-        success: true,
-      };
+      return await uploadToLambda(formData);
     },
     undefined
   );
