@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { FileInput } from "@/components/ui/file-input";
 import { ArrowRight, Loader } from "lucide-react";
 import { useActionState, useState } from "react";
@@ -14,14 +15,23 @@ export default function Home() {
     undefined
   );
   return (
-    <div className="flex items-center justify-center min-h-screen px-4">
-      <form action={action} className="max-w-xl space-y-4 p-1">
-        <FileInput name="file-input" file={fileInput} setFile={setFileInput} />
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? <Loader className="animate-spin" /> : <ArrowRight />}
-          {pending ? "Submitting..." : "Submit"}
-        </Button>
-      </form>
+    <div className="flex items-center justify-center flex-col min-h-screen px-4 bg-zinc-100 space-y-10">
+      <h1 className="text-3xl font-medium">App Name</h1>
+      <Card className="max-w-xl">
+        <CardContent>
+          <form action={action} className="space-y-5">
+            <FileInput
+              name="file-input"
+              file={fileInput}
+              setFile={setFileInput}
+            />
+            <Button type="submit" className="w-full" disabled={pending}>
+              {pending ? <Loader className="animate-spin" /> : <ArrowRight />}
+              {pending ? "Submitting..." : "Submit"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
