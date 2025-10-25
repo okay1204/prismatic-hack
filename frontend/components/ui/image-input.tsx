@@ -4,15 +4,12 @@ import { Upload } from "lucide-react";
 import React, { useState, useRef } from "react";
 import { Button } from "./button";
 
-export default function UploadInput({
-  file,
-  setFile,
+export default function ImageInput({
+  setImage,
 }: {
-  file: File | null;
-  setFile: React.Dispatch<React.SetStateAction<File | null>>;
+  setImage: React.Dispatch<React.SetStateAction<File | null>>;
 }) {
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
@@ -22,7 +19,7 @@ export default function UploadInput({
         setIsDragging(false);
 
         const droppedFile = e.dataTransfer.files[0];
-        setFile(droppedFile);
+        setImage(droppedFile);
       }}
       onDragOver={(e) => {
         e.preventDefault();
@@ -30,7 +27,7 @@ export default function UploadInput({
       }}
       onDragLeave={() => setIsDragging(false)}
       className={cn(
-        "border border-dashed rounded-xl p-12 text-center transition-all",
+        "border border-dashed rounded-xl p-12 text-center transition-all w-full",
         isDragging
           ? "border-primary bg-primary/5 scale-[1.02]"
           : "border-border hover:border-primary/50 hover:bg-muted/30"
@@ -43,11 +40,9 @@ export default function UploadInput({
 
         <div className="space-y-2">
           <p className="text-lg font-medium">
-            Drop your PDF here or click to browse
+            Drop your image here or click to browse
           </p>
-          <p className="text-sm text-muted-foreground">
-            Maximum file size: 10MB
-          </p>
+          <p className="text-sm text-muted-foreground">...</p>
         </div>
 
         <div>
@@ -57,26 +52,22 @@ export default function UploadInput({
             type="button"
             onClick={() => inputRef.current?.click()}
           >
-            Select PDF File
+            Select Image
           </Button>
 
           <input
-            id="file-upload"
+            id="image-upload"
             name="upload-input"
             ref={inputRef}
-            type="file"
+            type="image"
             accept=".pdf"
             onChange={(e) => {
               const selectedFile = e.target.files?.[0];
-              if (selectedFile) setFile(selectedFile);
+              if (selectedFile) setImage(selectedFile);
             }}
             className="sr-only"
           />
         </div>
-
-        {error && (
-          <p className="text-sm text-destructive font-medium">{error}</p>
-        )}
       </div>
     </div>
   );
