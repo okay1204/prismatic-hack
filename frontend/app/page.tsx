@@ -48,7 +48,7 @@ export default function Home() {
 
   return (
     <div className="flex items-center justify-center flex-col min-h-screen px-4 bg-zinc-100 space-y-4">
-      <div className="text-center space-y-2 mb-6">
+      <div className="text-center space-y-2 mb-10">
         <h1 className="text-2xl font-medium">Cancer Analysis</h1>
         <p className="text-muted-foreground">Upload an image for analysis</p>
       </div>
