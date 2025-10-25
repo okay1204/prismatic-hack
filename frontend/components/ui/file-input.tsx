@@ -48,10 +48,10 @@ function FileInput({
           }}
           onDragLeave={() => setIsDragging(false)}
           className={cn(
-            "border border-zinc-200 border-dashed rounded-xl p-12 text-center transition-all w-full",
+            "border border-zinc-300 rounded-xl p-12 text-center transition-all w-full",
             isDragging
-              ? "border-primary bg-primary/5 scale-[1.02]"
-              : "border hover:border-zinc-300 hover:bg-zinc-100/50"
+              ? "border bg-primary/5 scale-[1.01]"
+              : "border-dashed hover:bg-zinc-100/50"
           )}
         >
           <div className="flex flex-col items-center gap-4">
