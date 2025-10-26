@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ArrowUp, Loader2 } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { sendChatMessageStream, type ChatMessage } from "@/lib/chat-stream";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-export default function Chatpage() {
+function ChatContent() {
   const searchParams = useSearchParams();
   
   // Get diagnosis from URL params (from image analysis) or default to empty
@@ -295,5 +295,17 @@ export default function Chatpage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function Chatpage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8" />
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }
