@@ -48,7 +48,9 @@ export default function Home() {
         />
         <div>
           <h1 className="font-semibold text-2xl tracking-tight">Prismatic</h1>
-          <p className="text-muted-foreground text-sm">AI Cancer Detection</p>
+          <p className="text-muted-foreground text-sm font-medium">
+            AI Cancer Detection
+          </p>
         </div>
       </div>
 
