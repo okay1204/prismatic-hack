@@ -6,13 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ArrowUp, Loader2 } from "lucide-react";
 import Link from "next/link";
-import React, {
-  Suspense,
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { sendChatMessageStream, type ChatMessage } from "@/lib/chat-stream";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -32,7 +26,7 @@ function ChatContent() {
       text: string;
     }[]
   >([]);
-  const [diagnosis, setDiagnosis] = useState(diagnosisFromUrl);
+  const [diagnosis] = useState(diagnosisFromUrl);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
 
@@ -119,107 +113,92 @@ function ChatContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diagnosisFromUrl]);
 
-  const [, action, pending] = useActionState(
-    async (e: unknown, formData: FormData) => {
-      const inputMessage = formData.get("message") as string;
-      if (!inputMessage || inputMessage.trim() === "" || isStreaming) return;
+  // Client-side submit handler: immediately append user + bot placeholder
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const inputMessage = (formData.get("message") as string) || "";
 
-      // Validate diagnosis is provided
-      if (!diagnosis || diagnosis.trim() === "") {
-        setMessages((prev) => [
-          ...prev,
-          {
-            user: "bot",
-            text: "Please enter a diagnosis before chatting. You can upload an image for analysis or manually enter a diagnosis.",
-          },
-        ]);
-        return;
-      }
+    if (!inputMessage || inputMessage.trim() === "" || isStreaming) return;
 
-      // Add user message to chat
-      setMessages((prev) => [...prev, { user: "user", text: inputMessage }]);
+    // Validate diagnosis is provided
+    if (!diagnosis || diagnosis.trim() === "") {
+      setMessages((prev) => [
+        ...prev,
+        {
+          user: "bot",
+          text: "Please enter a diagnosis before chatting. You can upload an image for analysis or manually enter a diagnosis.",
+        },
+      ]);
+      return;
+    }
 
-      // Prepare chat history for API
-      const history: ChatMessage[] = messages.map((msg) => ({
-        role: msg.user === "user" ? "user" : "assistant",
-        content: msg.text,
-      }));
+    // Build an optimistic history that includes the new user message
+    const history: ChatMessage[] = [
+      ...messages.map(
+        (msg) =>
+          ({
+            role: (msg.user === "user" ? "user" : "assistant") as
+              | "user"
+              | "assistant",
+            content: msg.text,
+          } as ChatMessage)
+      ),
+      { role: "user", content: inputMessage } as ChatMessage,
+    ];
 
-      // Add placeholder for bot response and show the waiting shimmer
-      const botMessageIndex = messages.length + 1;
-      setMessages((prev) => [...prev, { user: "bot", text: "" }]);
-      setIsWaitingForResponse(true);
+    // Immediately update UI: add user message and bot placeholder
+    setMessages((prev) => [...prev, { user: "user", text: inputMessage }]);
+    setMessages((prev) => [...prev, { user: "bot", text: "" }]);
+    setIsWaitingForResponse(true);
 
-      // Get API URL from environment
-      const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL;
+    const apiUrl =
+      process.env.NEXT_PUBLIC_CHATBOT_API_URL || "http://localhost:8000/chat";
 
-      if (!apiUrl) {
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          {
-            user: "bot",
-            text: "Error: Chatbot API URL not configured. Please set NEXT_PUBLIC_CHATBOT_API_URL in .env.local",
-          },
-        ]);
-        return;
-      }
+    try {
+      let firstChunk = true;
+      await sendChatMessageStream(
+        inputMessage,
+        history,
+        diagnosis,
+        (chunk: string) => {
+          if (firstChunk) {
+            firstChunk = false;
+            setIsWaitingForResponse(false);
+            setIsStreaming(true);
+          }
 
-      try {
-        // Stream the response
-        let firstChunk = true;
-        const result = await sendChatMessageStream(
-          inputMessage,
-          history,
-          diagnosis,
-          (chunk) => {
-            if (firstChunk) {
-              firstChunk = false;
-              setIsWaitingForResponse(false);
-              setIsStreaming(true);
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            // update last bot message
+            const lastIndex = newMessages.map((m) => m.user).lastIndexOf("bot");
+            if (lastIndex >= 0) {
+              newMessages[lastIndex] = {
+                ...newMessages[lastIndex],
+                text: newMessages[lastIndex].text + chunk,
+              };
             }
-
-            // Update the bot's message with each chunk
-            setMessages((prev) => {
-              const newMessages = [...prev];
-              if (newMessages[botMessageIndex]) {
-                newMessages[botMessageIndex] = {
-                  user: "bot",
-                  text: newMessages[botMessageIndex].text + chunk,
-                };
-              }
-              return newMessages;
-            });
-          },
-          apiUrl
-        );
-
-        if (!result.success) {
-          setMessages((prev) => [
-            ...prev.slice(0, -1),
-            {
-              user: "bot",
-              text: `Error: ${result.error}`,
-            },
-          ]);
-        }
-      } catch (error) {
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          {
-            user: "bot",
-            text: `Error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ]);
-      } finally {
-        // Ensure loading/streaming flags are cleared when finished
-        setIsStreaming(false);
-        setIsWaitingForResponse(false);
-      }
-    },
-    undefined
-  );
+            return newMessages;
+          });
+        },
+        apiUrl
+      );
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          user: "bot",
+          text: `Error: ${
+            err instanceof Error ? err.message : "Unknown error"
+          }`,
+        },
+      ]);
+    } finally {
+      setIsStreaming(false);
+      setIsWaitingForResponse(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center flex-col flex-1 px-4 bg-zinc-100 space-y-4">
@@ -371,18 +350,17 @@ function ChatContent() {
         </div>
         <hr />
         <CardContent>
-          <form className="w-full flex items-center gap-2" action={action}>
+          <form
+            className="w-full flex items-center gap-2"
+            onSubmit={handleSubmit}
+          >
             <Input
               name="message"
               placeholder="Type your message..."
-              disabled={pending || isStreaming}
+              disabled={isStreaming}
             />
-            <Button type="submit" disabled={pending || isStreaming} size="icon">
-              {pending || isStreaming ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <ArrowUp />
-              )}
+            <Button type="submit" disabled={isStreaming} size="icon">
+              {isStreaming ? <Loader2 className="animate-spin" /> : <ArrowUp />}
             </Button>
           </form>
         </CardContent>
