@@ -276,70 +276,73 @@ function ChatContent() {
                       "max-w-96"
                     )}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        p: ({ children }) => (
-                          <p className="mb-2 last:mb-0">{children}</p>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="list-disc pl-4 mb-2">{children}</ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-decimal pl-4 mb-2">{children}</ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="mb-1">{children}</li>
-                        ),
-                        h1: ({ children }) => (
-                          <h1 className="text-lg font-medium py-2.5">
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="text-base font-medium py-2">
-                            {children}
-                          </h2>
-                        ),
-                        h3: ({ children }) => (
-                          <h3 className="text-sm font-medium py-1">
-                            {children}
-                          </h3>
-                        ),
-                        code: ({ className, children }) => {
-                          const isInline = !className;
-                          return isInline ? (
-                            <code className="bg-neutral-700 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">
-                              {children}
-                            </code>
-                          ) : (
-                            <code
-                              className={cn(
-                                "block bg-neutral-700 dark:bg-neutral-900 p-2 rounded text-xs overflow-x-auto",
-                                className
-                              )}
-                            >
-                              {children}
-                            </code>
-                          );
-                        },
-                        pre: ({ children }) => (
-                          <pre className="bg-neutral-700 dark:bg-neutral-900 p-2 rounded overflow-x-auto mb-2">
-                            {children}
-                          </pre>
-                        ),
-                        strong: ({ children }) => (
-                          <strong className="font-medium">{children}</strong>
-                        ),
-                        em: ({ children }) => (
-                          <em className="italic">{children}</em>
-                        ),
-                      }}
-                    >
-                      {text}
-                    </ReactMarkdown>
-                    {(isStreaming || pending || text.length <= 0) && (
+                    {user === "bot" && text.trim() === "" && isStreaming ? (
                       <TextShimmer>Thinking ...</TextShimmer>
+                    ) : (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">{children}</p>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc pl-4 mb-2">{children}</ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal pl-4 mb-2">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="mb-1">{children}</li>
+                          ),
+                          h1: ({ children }) => (
+                            <h1 className="text-lg font-medium py-2.5">
+                              {children}
+                            </h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-base font-medium py-2">
+                              {children}
+                            </h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-sm font-medium py-1">
+                              {children}
+                            </h3>
+                          ),
+                          code: ({ className, children }) => {
+                            const isInline = !className;
+                            return isInline ? (
+                              <code className="bg-neutral-700 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">
+                                {children}
+                              </code>
+                            ) : (
+                              <code
+                                className={cn(
+                                  "block bg-neutral-700 dark:bg-neutral-900 p-2 rounded text-xs overflow-x-auto",
+                                  className
+                                )}
+                              >
+                                {children}
+                              </code>
+                            );
+                          },
+                          pre: ({ children }) => (
+                            <pre className="bg-neutral-700 dark:bg-neutral-900 p-2 rounded overflow-x-auto mb-2">
+                              {children}
+                            </pre>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-medium">{children}</strong>
+                          ),
+                          em: ({ children }) => (
+                            <em className="italic">{children}</em>
+                          ),
+                        }}
+                      >
+                        {text}
+                      </ReactMarkdown>
                     )}
                   </div>
                 </div>
