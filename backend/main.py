@@ -78,7 +78,7 @@ async def chat(chat_request: ChatRequest):
             ]
             
             # Configure Bedrock Converse Stream request
-            model_id = 'anthropic.claude-sonnet-4-5-20250929-v1:0'
+            model_id = 'arn:aws:bedrock:us-east-1:754799739578:inference-profile/us.anthropic.claude-sonnet-4-5-20250929-v1:0'
             
             # Invoke Bedrock with Converse Stream API
             response = bedrock_runtime.converse_stream(
@@ -87,8 +87,7 @@ async def chat(chat_request: ChatRequest):
                 system=system_prompt,
                 inferenceConfig={
                     "maxTokens": 2048,
-                    "temperature": 0.7,
-                    "topP": 0.9
+                    "temperature": 0.7
                 }
             )
             

@@ -9,6 +9,8 @@ import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { sendChatMessageStream, type ChatMessage } from "@/lib/chat-stream";
 import { useSearchParams } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function Chatpage() {
   const searchParams = useSearchParams();
@@ -28,19 +30,6 @@ export default function Chatpage() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
-
-  // Add welcome message if diagnosis came from image analysis
-  useEffect(() => {
-    if (diagnosisFromUrl && messages.length === 0) {
-      setMessages([
-        {
-          user: "bot",
-          text: `I see you've been diagnosed with ${diagnosisFromUrl}. I'm here to help answer any questions you have about your condition. How can I assist you today?`,
-        },
-      ]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diagnosisFromUrl]);
 
   useEffect(() => {
     // Scroll the last message into view when messages change
@@ -165,23 +154,6 @@ export default function Chatpage() {
           <p className="text-sm text-muted-foreground">
             Ask questions about your condition
           </p>
-          <div className="mt-3 space-y-2">
-            {diagnosisFromUrl && (
-              <div className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-md px-3 py-1.5">
-                ✓ Diagnosis received from image analysis
-              </div>
-            )}
-            <div className="flex items-center justify-center gap-2">
-              <label className="text-sm font-medium">Diagnosis:</label>
-              <Input
-                value={diagnosis}
-                onChange={(e) => setDiagnosis(e.target.value)}
-                placeholder="Enter diagnosis"
-                className="max-w-xs"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
         </CardHeader>
         <hr />
         <div ref={containerRef} className="h-96 overflow-y-scroll space-y-0.5">
@@ -219,14 +191,38 @@ export default function Chatpage() {
                 </svg>
                 <div
                   className={cn(
-                    "rounded-2xl w-fit min-h-8 px-3 py-1.5 text-sm flex items-center text-left",
+                    "rounded-2xl w-fit min-h-8 px-3 py-1.5 text-sm text-left prose prose-sm dark:prose-invert max-w-none",
                     user === "user"
                       ? "ml-auto text-white bg-sky-500"
                       : "mr-auto text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 animate-message-user",
                     "max-w-96"
                   )}
                 >
-                  {text}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                      ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                      h1: ({ children }) => <h1 className="text-lg font-bold mb-2 mt-3">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-base font-bold mb-2 mt-3">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-sm font-bold mb-1 mt-2">{children}</h3>,
+                      code: ({ className, children }) => {
+                        const isInline = !className;
+                        return isInline ? (
+                          <code className="bg-neutral-700 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">{children}</code>
+                        ) : (
+                          <code className={`block bg-neutral-700 dark:bg-neutral-900 p-2 rounded text-xs overflow-x-auto ${className}`}>{children}</code>
+                        );
+                      },
+                      pre: ({ children }) => <pre className="bg-neutral-700 dark:bg-neutral-900 p-2 rounded overflow-x-auto mb-2">{children}</pre>,
+                      strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                      em: ({ children }) => <em className="italic">{children}</em>,
+                    }}
+                  >
+                    {text}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>
