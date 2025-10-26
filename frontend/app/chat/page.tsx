@@ -66,8 +66,7 @@ function ChatContent() {
         setMessages([botMessage]);
 
         const apiUrl =
-          process.env.NEXT_PUBLIC_CHATBOT_API_URL ||
-          "http://localhost:8000/chat";
+          process.env.NEXT_PUBLIC_BACKEND_URL + "/chat"
 
         let firstChunk = true;
         const success = await sendChatMessageStream(
@@ -157,7 +156,7 @@ function ChatContent() {
     setIsWaitingForResponse(true);
 
     const apiUrl =
-      process.env.NEXT_PUBLIC_CHATBOT_API_URL || "http://localhost:8000/chat";
+      process.env.NEXT_PUBLIC_BACKEND_URL + "/chat";
 
     try {
       let firstChunk = true;

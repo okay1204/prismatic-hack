@@ -15,18 +15,20 @@ export async function uploadToLambda(formData: FormData) {
     const buffer = await file.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
 
-    // Get the Lambda API URL from environment variables
-    const apiUrl = process.env.NEXT_PUBLIC_LAMBDA_API_URL;
+    // Get the Analyze Image API URL from environment variables
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/analyze";
+    console.log("NEXT_PUBLIC_BACKEND_URL", process.env.NEXT_PUBLIC_BACKEND_URL);
+    console.log("apiUrl", apiUrl);
 
     if (!apiUrl) {
       return {
         success: false,
         error:
-          "API URL not configured. Please set NEXT_PUBLIC_LAMBDA_API_URL in .env.local",
+          "API URL not configured. Please set NEXT_PUBLIC_BACKEND_URL in .env.local",
       };
     }
 
-    // Send to Lambda
+    // Send to backend
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -34,9 +36,10 @@ export async function uploadToLambda(formData: FormData) {
       },
       body: JSON.stringify({
         body: base64,
-        isBase64Encoded: false, // We're sending base64 as a string in JSON
       }),
     });
+
+    console.log("response", response);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -74,17 +77,17 @@ export async function sendChatMessage(
   history: ChatMessage[] = []
 ) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL;
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/chat";
 
     if (!apiUrl) {
       return {
         success: false,
         error:
-          "Chatbot API URL not configured. Please set NEXT_PUBLIC_CHATBOT_API_URL in .env.local",
+          "Chatbot API URL not configured. Please set NEXT_PUBLIC_BACKEND_URL in .env.local",
       };
     }
 
-    // Send to Lambda chatbot (non-streaming version)
+    // Send to backend chatbot (non-streaming version)
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
