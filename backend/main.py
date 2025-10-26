@@ -54,6 +54,142 @@ USED_DATASETS = [
     "tissuemnist",
 ]
 
+# Define dataset name translations
+DATASET_NAME_TRANSLATIONS = {
+    "pathmnist": "Histopathology patches (colorectal cancer slides)",
+    "chestmnist": "Chest X-rays (multi-label disease classification)",
+    "dermamnist": "Dermatoscopic skin-lesion images",
+    "octmnist": "Retinal OCT (optical coherence tomography) scans",
+    "pneumoniamnist": "Pediatric chest X-rays (pneumonia detection)",
+    "retinamnist": "Fundus retinal photos (diabetic retinopathy severity)",
+    "bloodmnist": "Microscopic blood-cell images from healthy donors",
+    "breastmnist": "Breast ultrasound images (lesion classification)",
+    "organamnist": "Abdominal CT slices of different organs",
+    "organcmnist": "Abdominal CT slices of different organs (coronal view)",
+    "organsmnist": "Abdominal CT slices of different organs (sagittal view)",
+    "tissuemnist": "Tissue microscopy (pancreas) patches"
+}
+
+# Define label mappings for each dataset
+DATASET_LABELS = {
+    "pathmnist": {
+        0: "Adipose tissue",
+        1: "Background",
+        2: "Debris",
+        3: "Lymphocytes",
+        4: "Mucus",
+        5: "Normal colon mucosa",
+        6: "Cancer-associated stroma",
+        7: "Tumor epithelium (colorectal adenocarcinoma)",
+        8: "Smooth muscle"
+    },
+    "chestmnist": {
+        0: "Atelectasis",
+        1: "Cardiomegaly",
+        2: "Effusion",
+        3: "Infiltration",
+        4: "Mass",
+        5: "Nodule",
+        6: "Pneumonia",
+        7: "Pneumothorax",
+        8: "Consolidation",
+        9: "Edema",
+        10: "Emphysema",
+        11: "Fibrosis",
+        12: "Pleural thickening",
+        13: "Hernia"
+    },
+    "dermamnist": {
+        0: "Actinic keratoses / Bowen's disease",
+        1: "Basal cell carcinoma",
+        2: "Benign keratosis",
+        3: "Dermatofibroma",
+        4: "Melanocytic nevus",
+        5: "Vascular lesion",
+        6: "Melanoma"
+    },
+    "octmnist": {
+        0: "Choroidal Neovascularization (CNV)",
+        1: "Diabetic Macular Edema (DME)",
+        2: "Drusen (age-related macular degeneration)",
+        3: "Normal"
+    },
+    "pneumoniamnist": {
+        0: "Normal",
+        1: "Pneumonia"
+    },
+    "retinamnist": {
+        0: "No DR",
+        1: "Mild DR",
+        2: "Moderate DR",
+        3: "Severe DR",
+        4: "Proliferative DR"
+    },
+    "bloodmnist": {
+        0: "Basophil",
+        1: "Eosinophil",
+        2: "Erythroblast",
+        3: "Immature Granulocytes",
+        4: "Lymphocyte",
+        5: "Monocyte",
+        6: "Neutrophil",
+        7: "Platelet"
+    },
+    "breastmnist": {
+        0: "Benign",
+        1: "Malignant"
+    },
+    "organamnist": {
+        0: "Spleen",
+        1: "Right Kidney",
+        2: "Left Kidney",
+        3: "Gallbladder",
+        4: "Esophagus",
+        5: "Liver",
+        6: "Stomach",
+        7: "Aorta",
+        8: "Inferior Vena Cava",
+        9: "Pancreas",
+        10: "Adrenal Gland"
+    },
+    "organcmnist": {
+        0: "Spleen",
+        1: "Right Kidney",
+        2: "Left Kidney",
+        3: "Gallbladder",
+        4: "Esophagus",
+        5: "Liver",
+        6: "Stomach",
+        7: "Aorta",
+        8: "Inferior Vena Cava",
+        9: "Pancreas",
+        10: "Adrenal Gland"
+    },
+    "organsmnist": {
+        0: "Spleen",
+        1: "Right Kidney",
+        2: "Left Kidney",
+        3: "Gallbladder",
+        4: "Esophagus",
+        5: "Liver",
+        6: "Stomach",
+        7: "Aorta",
+        8: "Inferior Vena Cava",
+        9: "Pancreas",
+        10: "Adrenal Gland"
+    },
+    "tissuemnist": {
+        0: "Connective tissue",
+        1: "Adipose tissue",
+        2: "Smooth muscle",
+        3: "Blood vessel",
+        4: "Peripheral nerve",
+        5: "Skeletal muscle",
+        6: "Lymphoid tissue",
+        7: "Background"
+    }
+}
+
 # Load stage1 model at startup
 stage1_model = None
 _stage2_cache = {}  # Cache for stage2 models
@@ -173,8 +309,21 @@ async def analyze_image(request: AnalyzeRequest):
             routed_dataset
         )
         
-        # Format user-friendly diagnosis message
-        diagnosis = f"{routed_dataset} - Class {pred_class_idx} ({pred_class_conf*100:.1f}% confidence)"
+        # Translate dataset name to human-readable description
+        dataset_key = routed_dataset.lower()
+        dataset_description = DATASET_NAME_TRANSLATIONS.get(
+            dataset_key,
+            routed_dataset
+        )
+        
+        # Translate class index to human-readable label
+        pred_class_label = DATASET_LABELS.get(dataset_key, {}).get(
+            pred_class_idx, 
+            f"Unknown class {pred_class_idx}"
+        )
+        
+        # Format user-friendly diagnosis message with medical terms
+        diagnosis = f"{dataset_description} - {pred_class_label} ({pred_class_conf*100:.1f}% confidence)"
         
         # Return plain text diagnosis
         return diagnosis
