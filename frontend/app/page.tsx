@@ -40,7 +40,7 @@ export default function Home() {
   }, [state]);
 
   return (
-    <div className="flex items-center justify-center flex-col flex-1 px-4 bg-zinc-100 space-y-4">
+    <div className="flex items-center justify-center flex-col flex-1 px-4 space-y-4">
       <div className="flex items-center justify-center gap-3  mb-10">
         <Image
           src="/prismatic-logo.png"

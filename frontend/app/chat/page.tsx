@@ -65,8 +65,7 @@ function ChatContent() {
         const botMessage = { user: "bot" as const, text: "" };
         setMessages([botMessage]);
 
-        const apiUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL + "/chat"
+        const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/chat";
 
         let firstChunk = true;
         const success = await sendChatMessageStream(
@@ -155,8 +154,7 @@ function ChatContent() {
     setMessages((prev) => [...prev, { user: "bot", text: "" }]);
     setIsWaitingForResponse(true);
 
-    const apiUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL + "/chat";
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/chat";
 
     try {
       let firstChunk = true;
@@ -203,7 +201,7 @@ function ChatContent() {
   };
 
   return (
-    <div className="flex items-center justify-center flex-col flex-1 px-4 bg-zinc-100 space-y-4">
+    <div className="flex items-center justify-center flex-col flex-1 px-4 space-y-4">
       <header className="flex items-center w-full max-w-xl ">
         <Link href="/">
           <Button size="sm" variant="outline">
