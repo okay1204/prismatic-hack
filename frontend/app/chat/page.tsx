@@ -122,6 +122,9 @@ function ChatContent() {
 
     if (!inputMessage || inputMessage.trim() === "" || isStreaming) return;
 
+    // Clear the input immediately
+    form.reset();
+
     // Validate diagnosis is provided
     if (!diagnosis || diagnosis.trim() === "") {
       setMessages((prev) => [
