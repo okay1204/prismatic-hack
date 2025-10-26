@@ -224,7 +224,7 @@ function ChatContent() {
         <hr />
         <div
           ref={containerRef}
-          className="h-full max-h-120 min-h-96 overflow-y-scroll space-y-0.5"
+          className="h-full max-h-140 min-h-96 overflow-y-scroll space-y-0.5"
         >
           <AnimatePresence>
             {messages.map(({ user, text }, index) => (
@@ -276,9 +276,6 @@ function ChatContent() {
                       "max-w-96"
                     )}
                   >
-                    {(isStreaming || pending) && (
-                      <TextShimmer>Thinking ...</TextShimmer>
-                    )}
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -295,17 +292,17 @@ function ChatContent() {
                           <li className="mb-1">{children}</li>
                         ),
                         h1: ({ children }) => (
-                          <h1 className="text-lg font-medium mb-2 mt-3">
+                          <h1 className="text-lg font-medium py-2.5">
                             {children}
                           </h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="text-base font-medium mb-2 mt-3">
+                          <h2 className="text-base font-medium py-2">
                             {children}
                           </h2>
                         ),
                         h3: ({ children }) => (
-                          <h3 className="text-sm font-medium mb-1 mt-2">
+                          <h3 className="text-sm font-medium py-1">
                             {children}
                           </h3>
                         ),
@@ -341,6 +338,9 @@ function ChatContent() {
                     >
                       {text}
                     </ReactMarkdown>
+                    {(isStreaming || pending || text.length <= 0) && (
+                      <TextShimmer>Thinking ...</TextShimmer>
+                    )}
                   </div>
                 </div>
               </motion.div>
