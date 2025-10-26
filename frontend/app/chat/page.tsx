@@ -46,6 +46,52 @@ export default function Chatpage() {
     }
   }, [messages.length]);
 
+  // Automatically send initial message when diagnosis is present
+  useEffect(() => {
+    if (diagnosisFromUrl && messages.length === 0) {
+      const sendInitialMessage = async () => {
+        setIsLoading(true);
+        
+        const botMessage = { user: "bot" as const, text: "" };
+        setMessages([botMessage]);
+        
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/chat";
+        
+        const success = await sendChatMessageStream(
+          "Give me a brief overview of my diagnosis and what I should know.",
+          [],
+          diagnosisFromUrl,
+          (chunk: string) => {
+            setMessages((prev) => {
+              const newMessages = [...prev];
+              newMessages[newMessages.length - 1] = {
+                ...newMessages[newMessages.length - 1],
+                text: newMessages[newMessages.length - 1].text + chunk,
+              };
+              return newMessages;
+            });
+          },
+          apiUrl
+        );
+        
+        if (!success) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              user: "bot",
+              text: "Sorry, there was an error connecting to the server. Please try again.",
+            },
+          ]);
+        }
+        
+        setIsLoading(false);
+      };
+      
+      sendInitialMessage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diagnosisFromUrl]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
