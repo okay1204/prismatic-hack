@@ -46,16 +46,72 @@ export async function uploadToLambda(formData: FormData) {
       };
     }
 
-    const result = await response.text();
+    const diagnosis = await response.text();
 
     return {
       success: true,
-      message: result,
+      diagnosis: diagnosis, // The diagnosis from Lambda
+      message: diagnosis,
       fileName: file.name,
       fileSize: file.size,
     };
   } catch (error) {
     console.error("Upload error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export async function sendChatMessage(
+  message: string,
+  history: ChatMessage[] = []
+) {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL;
+
+    if (!apiUrl) {
+      return {
+        success: false,
+        error:
+          "Chatbot API URL not configured. Please set NEXT_PUBLIC_CHATBOT_API_URL in .env.local",
+      };
+    }
+
+    // Send to Lambda chatbot (non-streaming version)
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        history,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        error: `Chat request failed: ${response.status} ${errorText}`,
+      };
+    }
+
+    const result = await response.json();
+
+    return {
+      success: true,
+      response: result.response,
+    };
+  } catch (error) {
+    console.error("Chat error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

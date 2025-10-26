@@ -16,8 +16,11 @@ def lambda_handler(event, context):
         Body=file_content,
         ContentType='image/jpeg'
     )
+
+    # TODO get actual analysis from the sagemaker model
+    diagnosis = 'MRI of eyes- Glaucoma'
     
     return {
         'statusCode': 200,
-        'body': f'File uploaded to s3://{bucket_name}/{object_key}'
+        'body': diagnosis
     }

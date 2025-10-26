@@ -12,6 +12,7 @@ type UploadState =
       success?: boolean;
       error?: string;
       message?: string;
+      diagnosis?: string;
       fileName?: string;
       fileSize?: number;
     }
@@ -30,8 +31,9 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (state && state.success) {
-      router.push("/chat");
+    if (state && state.success && state.diagnosis) {
+      // Pass diagnosis to chat page via URL params
+      router.push(`/chat?diagnosis=${encodeURIComponent(state.diagnosis)}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

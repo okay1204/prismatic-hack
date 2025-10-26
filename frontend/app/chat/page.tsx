@@ -4,20 +4,43 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowUp } from "lucide-react";
+import { ArrowLeft, ArrowUp, Loader2 } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useRef, useActionState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { sendChatMessageStream, type ChatMessage } from "@/lib/chat-stream";
+import { useSearchParams } from "next/navigation";
 
 export default function Chatpage() {
-  const [messages, setMessages] = React.useState<
+  const searchParams = useSearchParams();
+  
+  // Get diagnosis from URL params (from image analysis) or default to empty
+  const diagnosisFromUrl = searchParams.get("diagnosis") || "";
+  
+  const [messages, setMessages] = useState<
     {
       user: "user" | "bot";
       text: string;
     }[]
   >([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [diagnosis, setDiagnosis] = useState(diagnosisFromUrl);
+  const [isLoading, setIsLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
+
+  // Add welcome message if diagnosis came from image analysis
+  useEffect(() => {
+    if (diagnosisFromUrl && messages.length === 0) {
+      setMessages([
+        {
+          user: "bot",
+          text: `I see you've been diagnosed with ${diagnosisFromUrl}. I'm here to help answer any questions you have about your condition. How can I assist you today?`,
+        },
+      ]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diagnosisFromUrl]);
 
   useEffect(() => {
     // Scroll the last message into view when messages change
@@ -34,17 +57,98 @@ export default function Chatpage() {
     }
   }, [messages.length]);
 
-  const [, action, pending] = useActionState(
-    (prev: unknown, formData: FormData) => {
-      const message = formData.get("message") as string;
-      if (!message || message.trim() === "") return;
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { user: "user", text: message },
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!inputMessage || inputMessage.trim() === "" || isLoading) return;
+
+    // Validate diagnosis is provided
+    if (!diagnosis || diagnosis.trim() === "") {
+      setMessages((prev) => [
+        ...prev,
+        {
+          user: "bot",
+          text: "Please enter a diagnosis before chatting. You can upload an image for analysis or manually enter a diagnosis.",
+        },
       ]);
-    },
-    undefined
-  );
+      return;
+    }
+
+    const userMessage = inputMessage;
+    setInputMessage("");
+    setIsLoading(true);
+
+    // Add user message to chat
+    setMessages((prev) => [...prev, { user: "user", text: userMessage }]);
+
+    // Prepare chat history for API
+    const history: ChatMessage[] = messages.map((msg) => ({
+      role: msg.user === "user" ? "user" : "assistant",
+      content: msg.text,
+    }));
+
+    // Add placeholder for bot response
+    const botMessageIndex = messages.length + 1;
+    setMessages((prev) => [...prev, { user: "bot", text: "" }]);
+
+    // Get API URL from environment
+    const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL;
+
+    if (!apiUrl) {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          user: "bot",
+          text: "Error: Chatbot API URL not configured. Please set NEXT_PUBLIC_CHATBOT_API_URL in .env.local",
+        },
+      ]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Stream the response
+      const result = await sendChatMessageStream(
+        userMessage,
+        history,
+        diagnosis,
+        (chunk) => {
+          // Update the bot's message with each chunk
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            if (newMessages[botMessageIndex]) {
+              newMessages[botMessageIndex] = {
+                user: "bot",
+                text: newMessages[botMessageIndex].text + chunk,
+              };
+            }
+            return newMessages;
+          });
+        },
+        apiUrl
+      );
+
+      if (!result.success) {
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          {
+            user: "bot",
+            text: `Error: ${result.error}`,
+          },
+        ]);
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          user: "bot",
+          text: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="flex items-center justify-center flex-col min-h-screen px-4 bg-zinc-100 space-y-4">
       <header className="flex items-center w-full max-w-xl ">
@@ -57,10 +161,27 @@ export default function Chatpage() {
       </header>
       <Card className="max-w-xl w-full">
         <CardHeader className="text-center">
-          <h2 className="text-lg font-semibold">Chat</h2>
+          <h2 className="text-lg font-semibold">Medical Assistant Chat</h2>
           <p className="text-sm text-muted-foreground">
-            Ask questions about your image
+            Ask questions about your condition
           </p>
+          <div className="mt-3 space-y-2">
+            {diagnosisFromUrl && (
+              <div className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-md px-3 py-1.5">
+                ✓ Diagnosis received from image analysis
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-2">
+              <label className="text-sm font-medium">Diagnosis:</label>
+              <Input
+                value={diagnosis}
+                onChange={(e) => setDiagnosis(e.target.value)}
+                placeholder="Enter diagnosis"
+                className="max-w-xs"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
         </CardHeader>
         <hr />
         <div ref={containerRef} className="h-96 overflow-y-scroll space-y-0.5">
@@ -113,10 +234,20 @@ export default function Chatpage() {
         </div>
         <hr />
         <CardContent>
-          <form action={action} className="w-full flex items-center gap-2">
-            <Input name="message" placeholder="Type your message..." />
-            <Button type="submit" disabled={pending} size="icon">
-              <ArrowUp />
+          <form onSubmit={handleSendMessage} className="w-full flex items-center gap-2">
+            <Input
+              name="message"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Type your message..."
+              disabled={isLoading}
+            />
+            <Button type="submit" disabled={isLoading} size="icon">
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <ArrowUp />
+              )}
             </Button>
           </form>
         </CardContent>
