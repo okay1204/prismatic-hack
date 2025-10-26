@@ -4,13 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  ArrowLeft,
-  ArrowUp,
-  Loader2,
-  Loader2Icon,
-  LoaderIcon,
-} from "lucide-react";
+import { ArrowLeft, ArrowUp, Loader2 } from "lucide-react";
 import Link from "next/link";
 import React, {
   Suspense,
@@ -40,6 +34,7 @@ function ChatContent() {
   >([]);
   const [diagnosis, setDiagnosis] = useState(diagnosisFromUrl);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +65,8 @@ function ChatContent() {
       hasLoadedInitialMessage.current = true;
 
       const sendInitialMessage = async () => {
-        setIsStreaming(true);
+        // Show the waiting shimmer while we connect and wait for the first chunk
+        setIsWaitingForResponse(true);
 
         const botMessage = { user: "bot" as const, text: "" };
         setMessages([botMessage]);
@@ -79,11 +75,19 @@ function ChatContent() {
           process.env.NEXT_PUBLIC_CHATBOT_API_URL ||
           "http://localhost:8000/chat";
 
+        let firstChunk = true;
         const success = await sendChatMessageStream(
           "Give me a brief overview of my diagnosis and what I should know.",
           [],
           diagnosisFromUrl,
           (chunk: string) => {
+            // On first chunk, hide the shimmer and mark streaming started
+            if (firstChunk) {
+              firstChunk = false;
+              setIsWaitingForResponse(false);
+              setIsStreaming(true);
+            }
+
             setMessages((prev) => {
               const newMessages = [...prev];
               newMessages[newMessages.length - 1] = {
@@ -107,6 +111,7 @@ function ChatContent() {
         }
 
         setIsStreaming(false);
+        setIsWaitingForResponse(false);
       };
 
       sendInitialMessage();
@@ -140,9 +145,10 @@ function ChatContent() {
         content: msg.text,
       }));
 
-      // Add placeholder for bot response
+      // Add placeholder for bot response and show the waiting shimmer
       const botMessageIndex = messages.length + 1;
       setMessages((prev) => [...prev, { user: "bot", text: "" }]);
+      setIsWaitingForResponse(true);
 
       // Get API URL from environment
       const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL;
@@ -160,11 +166,18 @@ function ChatContent() {
 
       try {
         // Stream the response
+        let firstChunk = true;
         const result = await sendChatMessageStream(
           inputMessage,
           history,
           diagnosis,
           (chunk) => {
+            if (firstChunk) {
+              firstChunk = false;
+              setIsWaitingForResponse(false);
+              setIsStreaming(true);
+            }
+
             // Update the bot's message with each chunk
             setMessages((prev) => {
               const newMessages = [...prev];
@@ -199,6 +212,10 @@ function ChatContent() {
             }`,
           },
         ]);
+      } finally {
+        // Ensure loading/streaming flags are cleared when finished
+        setIsStreaming(false);
+        setIsWaitingForResponse(false);
       }
     },
     undefined
@@ -216,7 +233,7 @@ function ChatContent() {
       </header>
       <Card className="max-w-xl w-full">
         <CardHeader className="text-center">
-          <h2 className="text-lg font-semibold">Medical Assistant Chat</h2>
+          <h2 className="text-md font-semibold">Medical Assistant Chat</h2>
           <p className="text-sm text-muted-foreground">
             Ask questions about your condition
           </p>
@@ -276,7 +293,9 @@ function ChatContent() {
                       "max-w-96"
                     )}
                   >
-                    {user === "bot" && text.trim() === "" && isStreaming ? (
+                    {user === "bot" &&
+                    text.trim() === "" &&
+                    isWaitingForResponse ? (
                       <TextShimmer>Thinking ...</TextShimmer>
                     ) : (
                       <ReactMarkdown
