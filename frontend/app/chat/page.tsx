@@ -58,7 +58,7 @@ function ChatContent() {
         const botMessage = { user: "bot" as const, text: "" };
         setMessages([botMessage]);
         
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/chat";
+        const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL || "http://localhost:8000/chat";
         
         const success = await sendChatMessageStream(
           "Give me a brief overview of my diagnosis and what I should know.",
