@@ -222,7 +222,7 @@ function ChatContent() {
         <hr />
         <div
           ref={containerRef}
-          className="h-full max-h-140 min-h-96 overflow-y-scroll space-y-0.5"
+          className="h-full max-h-140 min-h-96 overflow-y-scroll space-y-6"
         >
           <AnimatePresence>
             {messages.map(({ user, text }, index) => (
