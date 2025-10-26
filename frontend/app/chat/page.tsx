@@ -30,6 +30,7 @@ function ChatContent() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
+  const hasLoadedInitialMessage = useRef(false);
 
   useEffect(() => {
     // Scroll the last message into view when messages change
@@ -48,7 +49,9 @@ function ChatContent() {
 
   // Automatically send initial message when diagnosis is present
   useEffect(() => {
-    if (diagnosisFromUrl && messages.length === 0) {
+    if (diagnosisFromUrl && messages.length === 0 && !hasLoadedInitialMessage.current) {
+      hasLoadedInitialMessage.current = true;
+      
       const sendInitialMessage = async () => {
         setIsLoading(true);
         
