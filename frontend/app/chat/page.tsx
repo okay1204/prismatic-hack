@@ -150,7 +150,7 @@ export default function Chatpage() {
     }
   };
   return (
-    <div className="flex items-center justify-center flex-col min-h-screen px-4 bg-zinc-100 space-y-4">
+    <div className="flex items-center justify-center flex-col flex-1 px-4 bg-zinc-100 space-y-4">
       <header className="flex items-center w-full max-w-xl ">
         <Link href="/">
           <Button size="sm" variant="outline">
