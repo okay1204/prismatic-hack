@@ -6,6 +6,7 @@ import { ArrowRight, Loader, XCircle } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { uploadToLambda } from "./actions";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type UploadState =
   | {
@@ -37,10 +38,18 @@ export default function Home() {
   }, [state]);
 
   return (
-    <div className="flex items-center justify-center flex-col min-h-screen px-4 bg-zinc-100 space-y-4">
-      <div className="text-center space-y-2 mb-10">
-        <h1 className="text-2xl font-medium">Cancer Analysis</h1>
-        <p className="text-muted-foreground">Upload an image for analysis</p>
+    <div className="flex items-center justify-center flex-col flex-1 px-4 bg-zinc-100 space-y-4">
+      <div className="flex items-center justify-center gap-3  mb-10">
+        <Image
+          src="/prismatic-logo.png"
+          alt="Prismatic Logo"
+          width={60}
+          height={60}
+        />
+        <div>
+          <h1 className="font-semibold text-2xl tracking-tight">Prismatic</h1>
+          <p className="text-muted-foreground text-sm">AI Cancer Detection</p>
+        </div>
       </div>
 
       <Card className="max-w-xl w-full">
